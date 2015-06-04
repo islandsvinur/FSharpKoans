@@ -1,5 +1,6 @@
 ﻿namespace FSharpKoans
 open FSharpKoans.Core
+open System.Globalization
 
 //---------------------------------------------------------------
 // Apply Your Knowledge!
@@ -55,8 +56,53 @@ module ``about the stock example`` =
     // tests for yourself along the way. You can also try 
     // using the F# Interactive window to check your progress.
 
+    let splitCommas (x:string) =
+        x.Split([|','|])
+
+    let loadAsList x =
+        List.map splitCommas x
+
+    let findOpenAndClose x =
+        loadAsList x |> List.map (fun x -> (x.[0], x.[1], x.[4]))
+
+    let parseOpenAndClose x =
+        loadAsList x |> List.map (fun x -> (x.[0], System.Double.Parse(x.[1], CultureInfo.InvariantCulture), System.Double.Parse(x.[4], CultureInfo.InvariantCulture)))
+    
+    let calculateOpenAndCloseVariance x =
+        loadAsList x |> List.map (fun x -> (x.[0], System.Double.Parse(x.[4], CultureInfo.InvariantCulture) - System.Double.Parse(x.[1], CultureInfo.InvariantCulture)))
+
+    [<Koan>]
+    let LoadAsList() =
+        let result = loadAsList stockData
+
+        AssertEquality [ "2012-03-30"; "32.40"; "32.41"; "32.04"; "32.26"; "31749400"; "32.26" ] result.[1]
+
+    [<Koan>]
+    let FindOpenAndClose() =
+        let result = findOpenAndClose stockData
+
+        AssertEquality ( "2012-03-30", "32.40", "32.26" ) result.[1]
+
+    [<Koan>]
+    let ParseOpenAndClose() =
+        let result = parseOpenAndClose stockData.Tail
+
+        AssertEquality ( "2012-03-30", 32.40, 32.26 ) result.[0]
+
+    [<Koan>]
+    let CalculateVariance() =
+        let result = calculateOpenAndCloseVariance stockData.Tail
+
+        AssertEquality ( "2012-03-30", 32.26 - 32.40 ) result.[0]
+
+    [<Koan>]
+    let CalculateMaximalVariance() =
+        let result = stockData.Tail |> calculateOpenAndCloseVariance |> List.fold (fun (md, mv) (d, v) -> if v > mv then (d, v) else (md, mv) ) ("", 0.0)
+
+        AssertEquality ( "2012-03-13", 32.67 - 32.24 ) result
+
     [<Koan>]
     let YouGotTheAnswerCorrect() =
-        let result =  __
+        let result, max_variance =  stockData.Tail |> calculateOpenAndCloseVariance |> List.fold (fun (md, mv) (d, v) -> if v > mv then (d, v) else (md, mv) ) ("", 0.0)
         
         AssertEquality "2012-03-13" result
